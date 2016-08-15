@@ -1,30 +1,37 @@
 from __future__ import division
 import numpy as np
 
-try:
-    from pylab import plt
-except ImportError:
-    print('Unable to import pylab. R_pca.plot_fit() will not work.')
+# try:
+#     from pylab import plt
+# except ImportError:
+#     print('Unable to import pylab. R_pca.plot_fit() will not work.')
 
 
-class R_pca:
+class R_pca(object):
+    """A Python implementation of R-PCA.
+
+    This implementation solves the principle component pursuit (PCP) problem by
+    alternating directions. The theory and implementation of the algorithm is
+    described here: http://statweb.stanford.edu/~candes/papers/RobustPCA.pdf
+
+    """
 
     def __init__(self, D, mu=None, lmbda=None):
         self.D = D
-        self.S = np.zeros(self.D.shape)
-        self.Y = np.zeros(self.D.shape)
+        self.S = np.zeros_like(self.D)
+        self.Y = np.zeros_like(self.D)
 
-        if mu:
+        if mu is not None:
             self.mu = mu
         else:
             self.mu = np.prod(self.D.shape) / (4 * self.norm_p(self.D, 2))
 
-        self.mu_inv = 1 / self.mu
+        self.mu_inv = 1.0 / self.mu
 
-        if lmbda:
+        if lmbda is not None:
             self.lmbda = lmbda
         else:
-            self.lmbda = 1 / np.sqrt(np.max(self.D.shape))
+            self.lmbda = 1.0 / np.sqrt(np.max(self.D.shape))
 
         print self.mu, self.lmbda
 
@@ -37,8 +44,8 @@ class R_pca:
         return np.sign(M) * np.maximum((np.abs(M) - tau), np.zeros(M.shape))
 
     def svd_threshold(self, M, tau):
-        U, S, V = np.linalg.svd(M, full_matrices=False)
-        return np.dot(U, np.dot(np.diag(self.shrink(S, tau)), V))
+        U, s, VT = np.linalg.svd(M, full_matrices=False)
+        return np.dot(U*self.shrink(s, tau), VT)
 
     def fit(self, tol=None, max_iter=1000, iter_print=100):
         iter = 0
