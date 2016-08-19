@@ -27,9 +27,19 @@ with h5py.File('decomp_PCP.hdf5', 'r') as f:
 
 U, s, VT = la.svd(R_HI)
 R_HIh = np.dot(U*s**0.5, VT) # R_HI^1/2
-R_HInh = np.dot(U*(1.0/s**0.5), VT) # R_HI^-1/2
+R_HInh = np.dot(U*(1.0/s)**0.5, VT) # R_HI^-1/2
 
 U1, s1, V1T = la.svd(np.dot(np.dot(R_HInh, R_tt), R_HInh))
+
+# plot eigen values
+# plt.figure()
+# plt.semilogy(range(len(s1)), s1)
+# plt.semilogy(range(len(s1)), s1, 'ro', markersize=4.0)
+# plt.axhline(y=1.0, linewidth=1.0, color='k', linestyle='--')
+# plt.xlim(-1, 256)
+# plt.ylabel('Eigen-values')
+# plt.savefig('reconstruct/eig_val.png')
+# plt.clf()
 
 # # minimizing the AIC
 # AIC = np.zeros_like(s1)
@@ -38,26 +48,54 @@ U1, s1, V1T = la.svd(np.dot(np.dot(R_HInh, R_tt), R_HInh))
 #     AIC[m] = 2.0*m + np.sum(tmp[m+1:])
 # n = np.argmin(AIC)
 
-# n = np.where(s1<1.1)[0][0]
-n = np.where(s1<1.15)[0][0]
-S = np.dot(R_HIh, U1[:, n:])
-Ri = la.inv(R_tt)
-STRiS = np.dot(S.T, np.dot(Ri, S))
-W = np.dot(np.dot(np.dot(S, la.inv(STRiS)), S.T), Ri)
-rec_cm = np.dot(W, tt_map)
-fig = plt.figure(1, figsize=(13, 5))
-healpy.mollview(rec_cm[0], fig=1, title='')
-healpy.graticule()
-fig.savefig('rec_cm.png')
-fig.clf()
+cind = len(cm_map) / 2 # central frequency index
+normalize = True # normalize cl to l(l+1)Cl/2pi
 
-plt.figure()
-cl_est = healpy.anafast(rec_cm[0])
-cl_sim = healpy.anafast(cm_map[0])
-plt.plot(cl_est, label='est')
-plt.plot(cl_sim, label='sim')
-plt.legend()
-plt.savefig('cl.png')
+# threshold = [ 0.9 + i * 0.05 for i in range(16) ]
+threshold = [ 0.9 + i * 0.1 for i in range(32) ] + [1.0e1, 1.0e2, 1.0e3, 1.0e4, 1.0e8, 1.0e12] + [ 3500.0 ]
+Ri = la.inv(R_tt)
+for td in threshold:
+    # reconstruct 21cm map
+    n = np.where(s1<td)[0][0]
+    S = np.dot(R_HIh, U1[:, n:])
+    STRiS = np.dot(S.T, np.dot(Ri, S))
+    W = np.dot(np.dot(np.dot(S, la.inv(STRiS)), S.T), Ri)
+    rec_cm = np.dot(W, tt_map)
+
+    fig = plt.figure(1, figsize=(13, 5))
+    healpy.mollview(rec_cm[cind], fig=1, title='')
+    healpy.graticule()
+    fig.savefig('reconstruct/rec_cm_%.2f.png' % td)
+    fig.clf()
+
+    fig = plt.figure(1, figsize=(13, 5))
+    healpy.mollview(cm_map[cind] - rec_cm[cind], fig=1, title='')
+    healpy.graticule()
+    fig.savefig('reconstruct/diff_%.2f.png' % td)
+    fig.clf()
+
+    # compute cl
+    cl_sim = healpy.anafast(cm_map[cind])
+    cl_est = healpy.anafast(rec_cm[cind])
+    if normalize:
+        l = np.arange(len(cl_sim))
+        factor = l*(l + 1) / (2*np.pi)
+        cl_sim *= factor
+        cl_est *= factor
+
+    plt.figure()
+    plt.plot(cl_sim, label='Input HI')
+    plt.plot(cl_est, label='Recovered HI')
+    if normalize:
+        plt.plot(cl_sim - cl_est, label='Residual')
+    plt.legend()
+    plt.xlabel(r'$l$')
+    if normalize:
+        plt.ylabel(r'$l(l+1) C_l^{TT}/2\pi$')
+    else:
+        plt.ylabel(r'$C_l^{TT}$')
+    plt.savefig('reconstruct/cl_%.2f.png' % td)
+    plt.clf()
 
 
 
