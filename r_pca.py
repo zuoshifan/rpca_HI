@@ -70,3 +70,12 @@ class R_pca(object):
             return Lk, Sk, err
         else:
             return Lk, Sk
+
+
+
+class MR_pca(R_pca):
+
+    @staticmethod
+    def svd_threshold(M, tau):
+        s, U = la.eigh(M)
+        return np.dot(U*MR_pca.shrink(s, tau), U.T)
