@@ -1,14 +1,10 @@
-from __future__ import division
+# from __future__ import division
 import numpy as np
-
-# try:
-#     from pylab import plt
-# except ImportError:
-#     print('Unable to import pylab. R_pca.plot_fit() will not work.')
+from scipy import linalg as la
 
 
 class R_pca(object):
-    """A Python implementation of R-PCA.
+    """A Python implementation of Robust PCA algorithm.
 
     This implementation solves the principle component pursuit (PCP) problem by
     alternating directions. The theory and implementation of the algorithm is
@@ -16,86 +12,94 @@ class R_pca(object):
 
     """
 
-    def __init__(self, D, mu=None, lmbda=None):
-        self.D = D
-        self.S = np.zeros_like(self.D)
-        self.Y = np.zeros_like(self.D)
+    def __init__(self, M, mu=None, lmbda=None, verbose=True):
+        self.M = M
+        self.verbose = verbose
+        # self.S = np.zeros_like(M)
+        # self.Y = np.zeros_like(M)
 
         if mu is not None:
             self.mu = mu
         else:
-            self.mu = np.prod(self.D.shape) / (4 * self.norm_p(self.D, 2))
+            # self.mu = np.prod(M.shape) / (4 * self.norm_p(M, 2))
+            self.mu = np.prod(M.shape) / (4.0 * la.norm(M, ord=1))
 
-        self.mu_inv = 1.0 / self.mu
+        # self.mu_inv = 1.0 / self.mu
 
         if lmbda is not None:
             self.lmbda = lmbda
         else:
-            self.lmbda = 1.0 / np.sqrt(np.max(self.D.shape))
+            self.lmbda = 1.0 / np.sqrt(np.max(M.shape))
 
-        print self.mu, self.lmbda
+        if verbose:
+            print 'mu    = ', self.mu
+            print 'lmbda = ', self.lmbda
 
-    @staticmethod
-    def norm_p(M, p):
-        return np.sum(np.power(M, p))
+    # @staticmethod
+    # def norm_p(M, p):
+    #     return np.sum(np.power(M, p))
 
     @staticmethod
     def shrink(M, tau):
-        return np.sign(M) * np.maximum((np.abs(M) - tau), np.zeros(M.shape))
+        return np.sign(M) * np.maximum(np.abs(M) - tau, 0.0)
 
-    def svd_threshold(self, M, tau):
-        U, s, VT = np.linalg.svd(M, full_matrices=False)
-        return np.dot(U*self.shrink(s, tau), VT)
+    @staticmethod
+    def svd_threshold(M, tau):
+        U, s, VT = la.svd(M, full_matrices=False)
+        # return np.dot(U*self.shrink(s, tau), VT)
+        return np.dot(U*R_pca.shrink(s, tau), VT)
 
-    def fit(self, tol=None, max_iter=1000, iter_print=100):
-        iter = 0
-        err = np.Inf
-        Sk = self.S
-        Yk = self.Y
-        Lk = np.zeros(self.D.shape)
+    def fit(self, tol=1.0e-7, max_iter=1000, iter_print=100, return_err=False):
 
-        if tol:
-            _tol = tol
+        cnt = 0
+        mu_inv = 1.0 / self.mu
+        Sk = np.zeros_like(self.M)
+        Yk = np.zeros_like(self.M)
+        # Lk = np.zeros(self.D.shape)
+
+        # if tol is None:
+        #     tol = 1.0e-7
+        # if tol:
+        #     _tol = tol
+        # else:
+        #     _tol = 1E-7 * self.norm_p(np.abs(self.D), 2)
+
+        # err = np.Inf
+        MF = la.norm(self.M, ord='fro')
+
+        while cnt < max_iter:
+            mYk = mu_inv*Yk
+            Lk = self.svd_threshold(self.M - Sk + mYk, mu_inv)
+            Sk = self.shrink(self.M - Lk + mYk, self.lmbda*mu_inv)
+
+            err = la.norm(self.M - Lk - Sk, ord='fro') / MF
+            if self.verbose and cnt % iter_print == 0:
+                print 'Iteration {0}, error = {1}'.format(cnt, err)
+            if err < tol:
+                if self.verbose and cnt % iter_print != 0:
+                    print 'Iteration {0}, error = {1}'.format(cnt, err)
+                break
+            else:
+                Yk = Yk + self.mu * (self.M - Lk - Sk)
+                cnt += 1
         else:
-            _tol = 1E-7 * self.norm_p(np.abs(self.D), 2)
+            if self.verbose:
+                print 'Warn: Exit with max_iter = {0}, error = {1}, tol = {2}'.format(cnt, err, tol)
 
-        while (err > _tol) and iter < max_iter:
-            Lk = self.svd_threshold(
-                self.D - Sk + self.mu_inv * Yk, self.mu_inv)
-            Sk = self.shrink(
-                self.D - Lk + (self.mu_inv * Yk), self.mu_inv * self.lmbda)
-            Yk = Yk + self.mu * (self.D - Lk - Sk)
-            err = self.norm_p(np.abs(self.D - Lk - Sk), 2)
-            iter += 1
-            if (iter % iter_print) == 0 or iter == 1 or iter > max_iter or err <= _tol:
-                print 'iteration: {0}, error: {1}'.format(iter, err)
-
-        self.L = Lk
-        self.S = Sk
-        return Lk, Sk
-
-    def plot_fit(self, size=None, tol=0.1, axis_on=True):
-
-        n, d = self.D.shape
-
-        if size:
-            nrows, ncols = size
+        if return_err:
+            return Lk, Sk, err
         else:
-            sq = np.ceil(np.sqrt(n))
-            nrows = int(sq)
-            ncols = int(sq)
+            return Lk, Sk
 
-        ymin = np.nanmin(self.D)
-        ymax = np.nanmax(self.D)
-        print 'ymin: {0}, ymax: {1}'.format(ymin, ymax)
+        # while (err > tol and cnt < max_iter):
+        #     mYk = mu_inv*Yk
+        #     Lk = self.svd_threshold(self.M - Sk + mYk, mu_inv)
+        #     Sk = self.shrink(self.M - Lk + mYk, self.lmbda*mu_inv)
+        #     Yk = Yk + self.mu * (self.M - Lk - Sk)
 
-        numplots = np.min([n, nrows * ncols])
-        plt.figure()
+        #     err = la.norm(self.M - Lk - Sk, ord='fro') / MF
+        #     cnt += 1
+        #     if (cnt % cnt_print) == 0 or cnt == 1 or cnt > max_iter or err <= _tol:
+        #         print 'cntation: {0}, error: {1}'.format(cnt, err)
 
-        for n in xrange(numplots):
-            plt.subplot(nrows, ncols, n + 1)
-            plt.ylim((ymin - tol, ymax + tol))
-            plt.plot(self.L[n, :] + self.S[n, :], 'r')
-            plt.plot(self.L[n, :], 'b')
-            if not axis_on:
-                plt.axis('off')
+        # return Lk, Sk
