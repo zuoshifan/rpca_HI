@@ -9,7 +9,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-out_dir = './reconstruct_new/'
+out_dir = './reconstruct/'
 if not os.path.exists(out_dir):
     os.mkdir(out_dir)
 
@@ -49,10 +49,10 @@ s1, U1 = la.eigh(np.dot(np.dot(R_HInh, R_tt), R_HInh))
 # plt.clf()
 
 cind = len(cm_map) / 2 # central frequency index
-normalize = True # normalize cl to l(l+1)Cl/2pi
-# normalize = False
 
-threshold = [ 1.0, 1.05, 1.1, 1.15, 1.2, 5.0e3 ]
+# threshold = [ 1.0, 1.05, 1.1, 1.15, 1.2, 5.0e3 ]
+threshold = [ 1.0, 1.1, 1.2, 5.0e3 ]
+
 Ri = la.inv(R_tt)
 for td in threshold:
     # reconstruct 21cm map
@@ -62,12 +62,14 @@ for td in threshold:
     W = np.dot(np.dot(np.dot(S, la.inv(STRiS)), S.T), Ri)
     rec_cm = np.dot(W, tt_map)
 
+    # plot reconstructed 21cm map
     fig = plt.figure(1, figsize=(13, 5))
     healpy.mollview(rec_cm[cind], fig=1, title='')
     healpy.graticule()
     fig.savefig(out_dir + 'rec_cm_%.2f.png' % td)
     fig.clf()
 
+    # plot difference map
     fig = plt.figure(1, figsize=(13, 5))
     healpy.mollview(cm_map[cind] - rec_cm[cind], fig=1, title='')
     healpy.graticule()
@@ -77,25 +79,36 @@ for td in threshold:
     # compute cl
     cl_sim = healpy.anafast(cm_map[cind])
     cl_est = healpy.anafast(rec_cm[cind])
-    if normalize:
-        l = np.arange(len(cl_sim))
-        factor = l*(l + 1) / (2*np.pi)
-        cl_sim *= factor
-        cl_est *= factor
 
+    # plot cl
     plt.figure()
     plt.plot(cl_sim, label='Input HI')
     plt.plot(cl_est, label='Recovered HI')
-    if normalize:
-        plt.plot(cl_sim - cl_est, label='Residual')
-    plt.legend()
+    if td > 10.0:
+        plt.ylim(0, 1.0e-10)
+    plt.legend(loc='best')
     plt.xlabel(r'$l$')
-    if normalize:
-        plt.ylabel(r'$l(l+1) C_l^{TT}/2\pi$')
-    else:
-        plt.ylabel(r'$C_l^{TT}$')
+    plt.ylabel(r'$C_l^{TT}$')
     plt.savefig(out_dir + 'cl_%.2f.png' % td)
     plt.clf()
+
+    # normalize cl to l(l+1)Cl/2pi
+    l = np.arange(len(cl_sim))
+    factor = l*(l + 1) / (2*np.pi)
+    cl_sim *= factor
+    cl_est *= factor
+
+    # plot normalized cl
+    plt.figure()
+    plt.plot(cl_sim, label='Input HI')
+    plt.plot(cl_est, label='Recovered HI')
+    plt.plot(cl_sim - cl_est, label='Residual')
+    plt.legend(loc='best')
+    plt.xlabel(r'$l$')
+    plt.ylabel(r'$l(l+1) C_l^{TT}/2\pi$')
+    plt.savefig(out_dir + 'cl_normalize_%.2f.png' % td)
+    plt.clf()
+
 
 
 
