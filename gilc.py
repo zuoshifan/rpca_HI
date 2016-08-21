@@ -92,6 +92,16 @@ for td in threshold:
     plt.savefig(out_dir + 'cl_%.2f.png' % td)
     plt.clf()
 
+    # plot transfer function cl_out / cl_in
+    plt.figure()
+    plt.plot(cl_est/cl_sim)
+    plt.axhline(y=1.0, linewidth=1.0, color='k', linestyle='--')
+    plt.ylim(0, 2)
+    plt.xlabel(r'$l$')
+    plt.ylabel(r'$T_l$')
+    plt.savefig(out_dir + 'Tl_%.2f.png' % td)
+    plt.clf()
+
     # normalize cl to l(l+1)Cl/2pi
     l = np.arange(len(cl_sim))
     factor = l*(l + 1) / (2*np.pi)
