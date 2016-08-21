@@ -19,6 +19,7 @@ with h5py.File(out_dir + 'decomp.hdf5', 'r') as f:
 res = tt_tt - L - S
 diff = cm_cm - S
 
+# synthesized plot
 plt.figure()
 # f, axarr = plt.subplots(3, 2, sharex=True, sharey=True)
 f, axarr = plt.subplots(3, 2, sharex=True)
@@ -53,3 +54,30 @@ axarr[2, 1].autoscale(False)
 # plt.axis('off')
 plt.colorbar(im, ax=axarr[2, 1])
 plt.savefig(out_dir + 'decomp.png')
+
+
+#############################################################
+# separate plot
+# plot L
+plt.figure()
+plt.imshow(L, origin='lower')
+plt.colorbar()
+plt.savefig(out_dir + 'L.png')
+
+# plot S
+plt.figure()
+plt.imshow(S, origin='lower')
+plt.colorbar()
+plt.savefig(out_dir + 'S.png')
+
+# plot res
+plt.figure()
+plt.imshow(res, origin='lower')
+plt.colorbar()
+plt.savefig(out_dir + 'res.png')
+
+# plot diff
+plt.figure()
+plt.imshow(diff, origin='lower')
+plt.colorbar()
+plt.savefig(out_dir + 'diff.png')
