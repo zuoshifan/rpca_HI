@@ -79,17 +79,27 @@ for td in threshold:
     # compute cl
     cl_sim = healpy.anafast(cm_map[cind])
     cl_est = healpy.anafast(rec_cm[cind])
+    cl_simxest = healpy.anafast(cm_map[cind], rec_cm[cind])
 
     # plot cl
     plt.figure()
     plt.plot(cl_sim, label='Input HI')
     plt.plot(cl_est, label='Recovered HI')
+    plt.plot(cl_simxest, label='cross', color='magenta')
     if td > 10.0:
         plt.ylim(0, 1.0e-10)
     plt.legend(loc='best')
     plt.xlabel(r'$l$')
     plt.ylabel(r'$C_l^{TT}$')
     plt.savefig(out_dir + 'cl_%.2f.png' % td)
+    plt.clf()
+
+    # plot cross cl
+    plt.figure()
+    plt.plot(cl_simxest)
+    plt.xlabel(r'$l$')
+    plt.ylabel(r'$C_l^{TT, cross}$')
+    plt.savefig(out_dir + 'xcl_%.2f.png' % td)
     plt.clf()
 
     # plot transfer function cl_out / cl_in
@@ -107,17 +117,28 @@ for td in threshold:
     factor = l*(l + 1) / (2*np.pi)
     cl_sim *= factor
     cl_est *= factor
+    cl_simxest *= factor
 
     # plot normalized cl
     plt.figure()
     plt.plot(cl_sim, label='Input HI')
     plt.plot(cl_est, label='Recovered HI')
-    plt.plot(cl_sim - cl_est, label='Residual')
+    plt.plot(cl_simxest, label='cross', color='magenta')
+    plt.plot(cl_sim - cl_est, label='Residual', color='red')
     plt.legend(loc='best')
     plt.xlabel(r'$l$')
     plt.ylabel(r'$l(l+1) C_l^{TT}/2\pi$')
     plt.savefig(out_dir + 'cl_normalize_%.2f.png' % td)
     plt.clf()
+
+    # plot normalized cross cl
+    plt.figure()
+    plt.plot(cl_simxest)
+    plt.xlabel(r'$l$')
+    plt.ylabel(r'$l(l+1) C_l^{TT, clross}/2\pi$')
+    plt.savefig(out_dir + 'xcl_normalize_%.2f.png' % td)
+    plt.clf()
+
 
 
 
