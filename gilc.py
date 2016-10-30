@@ -46,7 +46,7 @@ s1, U1 = la.eigh(np.dot(np.dot(R_HInh, R_tt), R_HInh))
 # plt.xlim(-1, 256)
 # plt.ylabel('Eigen-values')
 # plt.savefig(out_dir + 'eig_val.png')
-# plt.clf()
+# plt.close()
 
 cind = len(cm_map) / 2 # central frequency index
 
@@ -67,14 +67,14 @@ for td in threshold:
     healpy.mollview(rec_cm[cind], fig=1, title='')
     healpy.graticule()
     fig.savefig(out_dir + 'rec_cm_%.2f.png' % td)
-    fig.clf()
+    fig.close()
 
     # plot difference map
     fig = plt.figure(1, figsize=(13, 5))
     healpy.mollview(cm_map[cind] - rec_cm[cind], fig=1, title='')
     healpy.graticule()
     fig.savefig(out_dir + 'diff_%.2f.png' % td)
-    fig.clf()
+    fig.close()
 
     # compute cl
     cl_sim = healpy.anafast(cm_map[cind])
@@ -92,7 +92,7 @@ for td in threshold:
     plt.xlabel(r'$l$')
     plt.ylabel(r'$C_l^{TT}$')
     plt.savefig(out_dir + 'cl_%.2f.png' % td)
-    plt.clf()
+    plt.close()
 
     # plot cross cl
     plt.figure()
@@ -100,7 +100,7 @@ for td in threshold:
     plt.xlabel(r'$l$')
     plt.ylabel(r'$C_l^{TT, cross}$')
     plt.savefig(out_dir + 'xcl_%.2f.png' % td)
-    plt.clf()
+    plt.close()
 
     # plot transfer function cl_out / cl_in
     plt.figure()
@@ -110,7 +110,7 @@ for td in threshold:
     plt.xlabel(r'$l$')
     plt.ylabel(r'$T_l$')
     plt.savefig(out_dir + 'Tl_%.2f.png' % td)
-    plt.clf()
+    plt.close()
 
     # normalize cl to l(l+1)Cl/2pi
     l = np.arange(len(cl_sim))
@@ -129,7 +129,7 @@ for td in threshold:
     plt.xlabel(r'$l$')
     plt.ylabel(r'$l(l+1) C_l^{TT}/2\pi$')
     plt.savefig(out_dir + 'cl_normalize_%.2f.png' % td)
-    plt.clf()
+    plt.close()
 
     # plot normalized cross cl
     plt.figure()
@@ -137,7 +137,7 @@ for td in threshold:
     plt.xlabel(r'$l$')
     plt.ylabel(r'$l(l+1) C_l^{TT, clross}/2\pi$')
     plt.savefig(out_dir + 'xcl_normalize_%.2f.png' % td)
-    plt.clf()
+    plt.close()
 
 
 

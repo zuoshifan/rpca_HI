@@ -55,3 +55,4 @@ for name, corr in corrs.items():
     plt.imshow(corr, origin='lower')
     plt.colorbar()
     plt.savefig('%s.png' % name)
+    plt.close()
