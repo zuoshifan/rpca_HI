@@ -2,6 +2,7 @@ import os
 import numpy as np
 from numpy.linalg import matrix_rank
 from scipy import linalg as la
+from scipy import optimize
 import h5py
 import healpy
 import matplotlib
@@ -31,6 +32,10 @@ tt_map = fg_map + cm_map # total signal
 with h5py.File('decomp/decomp.hdf5', 'r') as f:
     R_tt = f['tt_tt'][:]
     R_HI = f['S'][:]
+    L = f['L'][:]
+
+with h5py.File('corr_data/corr.hdf5', 'r') as f:
+    R_f = f['fg_fg'][:]
 
 s, U = la.eigh(R_HI)
 R_HIh = np.dot(U*s**0.5, U.T)
@@ -48,6 +53,25 @@ s1, U1 = la.eigh(np.dot(np.dot(R_HInh, R_tt), R_HInh))
 # plt.savefig(out_dir + 'eig_val.png')
 # plt.close()
 
+# plot difference of foreground coherence
+plt.figure()
+# plt.subplot(221)
+# plt.imshow(R_f)
+# plt.colorbar()
+# plt.subplot(222)
+# plt.imshow(L)
+# plt.colorbar()
+# plt.subplot(223)
+plt.imshow(R_f - L)
+plt.colorbar()
+plt.savefig(out_dir + 'Rf_diff.png')
+plt.close()
+
+# Equation for Gaussian
+def f(x, a, b, c):
+    return a * np.exp(-(x - b)**2.0 / (2 * c**2))
+
+bins = 201
 cind = len(cm_map) / 2 # central frequency index
 
 # threshold = [ 1.0, 1.05, 1.1, 1.15, 1.2, 5.0e3 ]
@@ -67,14 +91,51 @@ for td in threshold:
     healpy.mollview(rec_cm[cind], fig=1, title='')
     healpy.graticule()
     fig.savefig(out_dir + 'rec_cm_%.2f.png' % td)
-    fig.close()
+    plt.close()
 
     # plot difference map
     fig = plt.figure(1, figsize=(13, 5))
     healpy.mollview(cm_map[cind] - rec_cm[cind], fig=1, title='')
     healpy.graticule()
     fig.savefig(out_dir + 'diff_%.2f.png' % td)
-    fig.close()
+    plt.close()
+
+    # plot scatter
+    plt.figure()
+    plt.scatter(cm_map[cind], rec_cm[cind])
+    plt.xlim(-0.002, 0.002)
+    plt.ylim(-0.002, 0.002)
+    ref_line = np.linspace(-0.002, 0.002, 100)
+    plt.plot(ref_line, ref_line, 'k--')
+    plt.savefig(out_dir + 'scatter_%.2f.png' % td)
+    plt.close()
+
+    # plot hist
+    plt.figure()
+    data = plt.hist(rec_cm[cind]/cm_map[cind]-1, bins=bins, range=[-3, 3])
+    plt.xlabel('recover/input' + r'${} - 1$')
+
+    if td < 1.5:
+        # Generate data from bins as a set of points
+        x = [0.5 * (data[1][ii] + data[1][ii+1]) for ii in xrange(len(data[1])-1)]
+        y = data[0]
+
+        popt, pcov = optimize.curve_fit(f, x, y)
+        a, b, c = popt
+
+        xmax = max(abs(x[0]), abs(x[-1]))
+        x_fit = np.linspace(-xmax, xmax, bins)
+        y_fit = f(x_fit, *popt)
+
+        lable = r'$a \, \exp{(- \frac{(x - \mu)^2} {2 \sigma^2})}$' + '\n\n' + r'$a = %f$' % a + '\n' + r'$\mu = %f$' % b + '\n' + r'$\sigma = %f$' % np.abs(c)
+        plt.plot(x_fit, y_fit, lw=2, color="r", label=lable)
+        plt.xlim(-xmax, xmax)
+        plt.legend()
+
+    plt.savefig(out_dir + 'hist_%.2f.png' % td)
+    plt.close()
+
+
 
     # compute cl
     cl_sim = healpy.anafast(cm_map[cind])

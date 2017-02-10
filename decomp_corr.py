@@ -95,7 +95,7 @@ U1 = U1[:, ::-1]
 # healpy.graticule()
 # # fig.savefig('rec_cm.png')
 # fig.savefig('rec_cm3.png')
-# fig.close()
+# plt.close()
 
 
 
@@ -120,4 +120,4 @@ if rank == 0:
     healpy.graticule()
     # fig.savefig('rec_cm.png')
     fig.savefig('rec_cm5.png')
-    fig.close()
+    plt.close()
