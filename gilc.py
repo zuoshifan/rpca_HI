@@ -87,16 +87,22 @@ for td in threshold:
     rec_cm = np.dot(W, tt_map)
 
     # plot reconstructed 21cm map
-    fig = plt.figure(1, figsize=(13, 5))
-    healpy.mollview(rec_cm[cind], fig=1, title='')
-    healpy.graticule()
+    # fig = plt.figure(1, figsize=(13, 5))
+    fig = plt.figure(1)
+    # healpy.mollview(rec_cm[cind], fig=1, title='')
+    # healpy.mollview(rec_cm[cind], fig=1, title='', min=-0.001, max=0.001)
+    healpy.mollview(rec_cm[cind], fig=1, title='', min=-0.0003, max=0.0003)
+    healpy.graticule(verbose=False)
     fig.savefig(out_dir + 'rec_cm_%.2f.png' % td)
     plt.close()
 
     # plot difference map
-    fig = plt.figure(1, figsize=(13, 5))
-    healpy.mollview(cm_map[cind] - rec_cm[cind], fig=1, title='')
-    healpy.graticule()
+    # fig = plt.figure(1, figsize=(13, 5))
+    fig = plt.figure(1)
+    # healpy.mollview(cm_map[cind] - rec_cm[cind], fig=1, title='')
+    # healpy.mollview(cm_map[cind] - rec_cm[cind], fig=1, title='', min=-0.001, max=0.001)
+    healpy.mollview(cm_map[cind] - rec_cm[cind], fig=1, title='', min=-0.0003, max=0.0003)
+    healpy.graticule(verbose=False)
     fig.savefig(out_dir + 'diff_%.2f.png' % td)
     plt.close()
 
@@ -245,13 +251,13 @@ for td in threshold:
 
 #     fig = plt.figure(1, figsize=(13, 5))
 #     healpy.mollview(rec_cm[cind], fig=1, title='')
-#     healpy.graticule()
+#     healpy.graticule(verbose=False)
 #     fig.savefig('reconstruct/rec_cm_%.2f.png' % td)
 #     fig.clf()
 
 #     fig = plt.figure(1, figsize=(13, 5))
 #     healpy.mollview(cm_map[cind] - rec_cm[cind], fig=1, title='')
-#     healpy.graticule()
+#     healpy.graticule(verbose=False)
 #     fig.savefig('reconstruct/diff_%.2f.png' % td)
 #     fig.clf()
 

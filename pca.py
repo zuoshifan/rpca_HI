@@ -83,7 +83,7 @@ for i in xrange(1, 7):
     # plt.figure()
     # fig = plt.figure(1, figsize=(13, 5))
     # healpy.mollview(pc[cind], fig=1, title='')
-    # healpy.graticule()
+    # healpy.graticule(verbose=False)
     # fig.savefig(out_dir + 'pc_%d.png' % i)
     # plt.close()
 
@@ -91,7 +91,7 @@ for i in xrange(1, 7):
     plt.figure()
     fig = plt.figure(1)
     healpy.mollview(pc_sum[cind], fig=1, title='', min=0, max=50)
-    healpy.graticule()
+    healpy.graticule(verbose=False)
     fig.savefig(out_dir + 'pc_sum_%d.png' % i)
     plt.close()
 
@@ -105,8 +105,11 @@ for i in xrange(1, 7):
     # plot res
     plt.figure()
     fig = plt.figure(1)
-    healpy.mollview(res[cind], fig=1, title='')
-    healpy.graticule()
+    # healpy.mollview(res[cind], fig=1, title='')
+    # healpy.mollview(res[cind], fig=1, title='', min=-0.001, max=0.001)
+    # healpy.mollview(res[cind], fig=1, title='', min=-0.0005, max=0.0005)
+    healpy.mollview(res[cind], fig=1, title='', min=-0.0004, max=0.0004)
+    healpy.graticule(verbose=False)
     fig.savefig(out_dir + 'res_%d.png' % i)
     plt.close()
 
@@ -115,8 +118,11 @@ for i in xrange(1, 7):
     # plot difference map
     # fig = plt.figure(1, figsize=(13, 5))
     fig = plt.figure(1)
-    healpy.mollview(cm_map[cind] - rec_cm[cind], fig=1, title='')
-    healpy.graticule()
+    # healpy.mollview(cm_map[cind] - rec_cm[cind], fig=1, title='')
+    # healpy.mollview(cm_map[cind] - rec_cm[cind], fig=1, title='', min=-0.001, max=0.001)
+    # healpy.mollview(cm_map[cind] - rec_cm[cind], fig=1, title='', min=-0.0005, max=0.0005)
+    healpy.mollview(cm_map[cind] - rec_cm[cind], fig=1, title='', min=-0.0004, max=0.0004)
+    healpy.graticule(verbose=False)
     fig.savefig(out_dir + 'diff_%d.png' % i)
     plt.close()
 
